@@ -1,0 +1,462 @@
+use client'
+
+import { useState, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Gift, Heart, Sparkles, Cake, Star } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+
+// Confetti piece type
+type Confetti = {
+  id: number
+  left: number
+  delay: number
+  duration: number
+  color: string
+  size: number
+  rotate: number
+}
+
+const CONFETTI_COLORS = [
+  '#f43f5e', // rose
+  '#ec4899', // pink
+  '#f59e0b', // amber
+  '#fbbf24', // gold
+  '#fb7185', // light rose
+  '#e11d48', // deep rose
+  '#facc15', // yellow
+]
+
+// Floating decorative balloon config
+const BALLOONS = [
+  { color: '#f43f5e', left: '6%', delay: 0, size: 70, drift: 18 },
+  { color: '#fbbf24', left: '18%', delay: 0.4, size: 55, drift: -22 },
+  { color: '#ec4899', left: '32%', delay: 0.8, size: 64, drift: 14 },
+  { color: '#fb7185', left: '68%', delay: 0.2, size: 60, drift: -16 },
+  { color: '#facc15', left: '82%', delay: 0.6, size: 72, drift: 20 },
+  { color: '#e11d48', left: '92%', delay: 1.0, size: 50, drift: -12 },
+]
+
+export default function Home() {
+  const [duaOpen, setDuaOpen] = useState(false)
+  const [confettiBurst, setConfettiBurst] = useState(false)
+  const [bursts, setBursts] = useState(0)
+
+  // Continuous background confetti
+  const ambientConfetti = useMemo<Confetti[]>(() => {
+    return Array.from({ length: 28 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 6,
+      duration: 5 + Math.random() * 5,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      size: 6 + Math.random() * 8,
+      rotate: Math.random() * 360,
+    }))
+  }, [])
+
+  // Burst confetti when gift opens
+  const burstConfetti = useMemo<Confetti[]>(() => {
+    return Array.from({ length: 60 }, (_, i) => ({
+      id: i + 1000,
+      left: 50 + (Math.random() - 0.5) * 20,
+      delay: Math.random() * 0.4,
+      duration: 2 + Math.random() * 2,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      size: 8 + Math.random() * 10,
+      rotate: Math.random() * 360,
+    }))
+  }, [bursts])
+
+  const handleOpenGift = () => {
+    setDuaOpen(true)
+    setConfettiBurst(true)
+    setBursts((b) => b + 1)
+    setTimeout(() => setConfettiBurst(false), 4500)
+  }
+
+  // Set page title dynamically (client side)
+  useEffect(() => {
+    document.title = 'Happy 42nd Birthday, Khala Najma!'
+  }, [])
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-amber-50">
+      {/* Decorative radial glows */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-rose-200/50 blur-3xl" />
+        <div className="absolute top-1/3 -right-32 h-[28rem] w-[28rem] rounded-full bg-amber-200/40 blur-3xl" />
+        <div className="absolute -bottom-32 left-1/4 h-96 w-96 rounded-full bg-pink-200/40 blur-3xl" />
+      </div>
+
+      {/* Floating balloons */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {BALLOONS.map((b, i) => (
+          <motion.div
+            key={i}
+            initial={{ y: '110vh', opacity: 0 }}
+            animate={{
+              y: ['-10vh', '-90vh'],
+              x: [0, b.drift, -b.drift / 2, b.drift / 3, 0],
+              opacity: [0, 1, 1, 0.85, 0],
+            }}
+            transition={{
+              duration: 14,
+              delay: b.delay,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            style={{
+              position: 'absolute',
+              left: b.left,
+              width: b.size,
+              height: b.size * 1.2,
+            }}
+          >
+            <svg viewBox="0 0 60 72" className="h-full w-full drop-shadow-md">
+              <ellipse cx="30" cy="28" rx="22" ry="26" fill={b.color} />
+              <ellipse cx="22" cy="20" rx="6" ry="9" fill="rgba(255,255,255,0.4)" />
+              <path d="M30 54 L28 60 L32 60 Z" fill={b.color} />
+              <path
+                d="M30 60 Q34 64 30 68 Q26 72 30 72"
+                stroke="rgba(120,120,120,0.5)"
+                strokeWidth="1"
+                fill="none"
+              />
+            </svg>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Ambient falling confetti */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {ambientConfetti.map((c) => (
+          <motion.div
+            key={c.id}
+            initial={{ y: '-10vh', opacity: 0, rotate: 0 }}
+            animate={{ y: '110vh', opacity: [0, 1, 1, 0], rotate: c.rotate }}
+            transition={{
+              duration: c.duration,
+              delay: c.delay,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            style={{
+              position: 'absolute',
+              left: `${c.left}%`,
+              width: c.size,
+              height: c.size * 0.5,
+              backgroundColor: c.color,
+              borderRadius: 2,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Burst confetti when gift opened */}
+      <AnimatePresence>
+        {confettiBurst && (
+          <div className="pointer-events-none absolute inset-0 z-40 overflow-hidden">
+            {burstConfetti.map((c) => (
+              <motion.div
+                key={c.id}
+                initial={{
+                  x: '50vw',
+                  y: '60vh',
+                  opacity: 1,
+                  rotate: 0,
+                  scale: 1,
+                }}
+                animate={{
+                  x: `${(c.left - 50) * 12}vw`,
+                  y: `${60 + (Math.random() - 0.5) * 80}vh`,
+                  opacity: [1, 1, 0],
+                  rotate: c.rotate * 3,
+                  scale: 1.2,
+                }}
+                transition={{
+                  duration: c.duration,
+                  delay: c.delay,
+                  ease: 'easeOut',
+                }}
+                style={{
+                  position: 'absolute',
+                  width: c.size,
+                  height: c.size * 0.5,
+                  backgroundColor: c.color,
+                  borderRadius: 2,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Main content */}
+      <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-12 text-center">
+        {/* Top sparkle row */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="mb-4 flex items-center gap-2 text-rose-500"
+        >
+          <Sparkles className="h-5 w-5" />
+          <span className="text-sm font-semibold uppercase tracking-[0.25em]">
+            8 November 2026
+          </span>
+          <Sparkles className="h-5 w-5" />
+        </motion.div>
+
+        {/* Big 42 */}
+        <motion.div
+          initial={{ scale: 0.4, opacity: 0, rotate: -10 }}
+          animate={{ scale: 1, opacity: 1, rotate: 0 }}
+          transition={{ duration: 0.9, type: 'spring', bounce: 0.5 }}
+          className="relative mb-2"
+        >
+          <div className="flex items-end justify-center">
+            <span className="bg-gradient-to-br from-rose-500 via-pink-500 to-amber-400 bg-clip-text text-[8rem] font-black leading-none text-transparent drop-shadow-sm sm:text-[12rem]">
+              42
+            </span>
+            <motion.span
+              animate={{ rotate: [0, 15, -10, 0], scale: [1, 1.15, 1] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="mb-4 ml-2"
+            >
+              <Star className="h-10 w-10 fill-amber-400 text-amber-400 sm:h-14 sm:w-14" />
+            </motion.span>
+          </div>
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.7 }}
+          className="mb-3 text-lg font-medium text-rose-700/80 sm:text-xl"
+        >
+          years of love, light & blessings
+        </motion.p>
+
+        {/* Heading */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="mb-2 text-4xl font-black tracking-tight text-rose-600 sm:text-6xl md:text-7xl"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          Happy Birthday
+        </motion.h1>
+
+        <motion.h2
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.7, duration: 0.7, type: 'spring' }}
+          className="mb-6 text-3xl font-bold text-pink-700 sm:text-5xl"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          Khala Najma
+        </motion.h2>
+
+        {/* Decorative divider with cake */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9 }}
+          className="mb-6 flex items-center gap-3"
+        >
+          <span className="h-[2px] w-12 bg-gradient-to-r from-transparent to-rose-300" />
+          <Cake className="h-7 w-7 text-rose-500" />
+          <span className="h-[2px] w-12 bg-gradient-to-l from-transparent to-rose-300" />
+        </motion.div>
+
+        {/* Heartfelt message card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.8 }}
+          className="mb-8 max-w-xl rounded-3xl border border-rose-100 bg-white/70 p-6 shadow-xl backdrop-blur-sm sm:p-8"
+        >
+          <p className="text-base leading-relaxed text-rose-900/90 sm:text-lg">
+            Dear Khala Najma, today the whole world feels a little warmer
+            because it is your day. Forty-two years of kindness, gentle smiles,
+            and the prayers you whispered for all of us. May Allah fill your
+            coming year with health, peace, and barakah in every breath.
+            <span className="mt-3 block font-semibold text-rose-600">
+              We love you, always and endlessly. 💕
+            </span>
+          </p>
+        </motion.div>
+
+        {/* Gift button */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.2, duration: 0.6, type: 'spring' }}
+          className="flex flex-col items-center gap-3"
+        >
+          <p className="text-sm font-medium text-rose-600/80">
+            Tap the gift to open a little dua made just for you
+          </p>
+          <motion.button
+            onClick={handleOpenGift}
+            whileHover={{ scale: 1.06, rotate: -1 }}
+            whileTap={{ scale: 0.94 }}
+            animate={{
+              boxShadow: [
+                '0 10px 30px -10px rgba(244,63,94,0.5)',
+                '0 18px 45px -8px rgba(236,72,153,0.65)',
+                '0 10px 30px -10px rgba(244,63,94,0.5)',
+              ],
+            }}
+            transition={{
+              boxShadow: { duration: 2.5, repeat: Infinity },
+            }}
+            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 px-8 py-4 text-lg font-bold text-white shadow-2xl ring-2 ring-white/40 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-300 sm:px-10 sm:py-5 sm:text-xl"
+            aria-label="Open your birthday gift — a dua"
+          >
+            {/* Shimmer overlay */}
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+            <motion.span
+              animate={{ rotate: [0, -10, 10, -10, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <Gift className="h-7 w-7" />
+            </motion.span>
+            <span className="relative">Open Your Gift</span>
+            <Heart className="h-5 w-5 fill-white" />
+          </motion.button>
+        </motion.div>
+
+        {/* Footer signature */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.6 }}
+          className="mt-12 text-xs font-medium text-rose-400/80"
+        >
+          with all our love & duas · 8 · 11 · 2026
+        </motion.p>
+      </section>
+
+      {/* Dua Dialog */}
+      <Dialog open={duaOpen} onOpenChange={setDuaOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-rose-200 bg-gradient-to-br from-white via-rose-50/80 to-amber-50/80 p-0 sm:max-w-xl">
+          {/* Decorative header */}
+          <div className="relative overflow-hidden rounded-t-lg bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 px-6 py-6 text-center text-white">
+            <div className="pointer-events-none absolute inset-0 opacity-30">
+              <div className="absolute left-4 top-2 text-2xl">✦</div>
+              <div className="absolute right-6 top-4 text-xl">✦</div>
+              <div className="absolute left-1/3 bottom-2 text-lg">✦</div>
+            </div>
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', delay: 0.15 }}
+              className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white/25"
+            >
+              <Gift className="h-6 w-6" />
+            </motion.div>
+            <h3 className="text-xl font-bold sm:text-2xl">A Gift for You</h3>
+            <p className="mt-1 text-sm text-rose-50">
+              A heartfelt dua, made with love
+            </p>
+          </div>
+
+          <div className="px-6 py-6 sm:px-8 sm:py-8">
+            <DialogHeader className="items-center text-center">
+              <DialogTitle className="text-2xl font-bold text-rose-700">
+                دعا · A Dua for Khala Najma
+              </DialogTitle>
+              <DialogDescription className="text-rose-600/70">
+                Bismillāhir Rahmānir Rahīm
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Arabic */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-4 text-center"
+            >
+              <p
+                dir="rtl"
+                lang="ar"
+                className="text-xl font-medium leading-loose text-rose-900 sm:text-2xl"
+                style={{ fontFamily: "var(--font-amiri), Georgia, serif" }}
+              >
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                <br />
+                اللَّهُمَّ بَارِكْ فِي عُمْرِهَا وَصِحَّتِهَا وَرِزْقِهَا،
+                وَاجْعَلْ السَّعَادَةَ رَفِيقَهَا، وَالْإِيمَانَ نُورَ قَلْبِهَا،
+                وَالْجَنَّةَ مَقَرَّهَا. آمِينَ.
+              </p>
+            </motion.div>
+
+            {/* Urdu */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mt-5 rounded-2xl border border-rose-200 bg-white/70 px-5 py-5"
+            >
+              <div className="mb-3 flex items-center justify-center gap-2 text-rose-500">
+                <Heart className="h-4 w-4 fill-rose-500" />
+                <span className="text-xs font-semibold uppercase tracking-widest">
+                  اردو
+                </span>
+                <Heart className="h-4 w-4 fill-rose-500" />
+              </div>
+              <p
+                dir="rtl"
+                lang="ur"
+                className="text-right text-lg leading-loose text-rose-900 sm:text-xl"
+                style={{ fontFamily: "var(--font-nastaliq), Georgia, serif" }}
+              >
+                بسم اللہ الرحمٰن الرحیم۔
+                <br />
+                اے اللہ! میری پیاری خالہ نجما کی عمر، صحت اور رزق میں برکت عطا فرما۔
+                ان کے چہرے پر ہمیشہ مسکراہٹ رکھ، ان کے دل کو ایمان کی روشنی سے منور کر۔
+                ان کے گھر میں سکون، ان کی زندگی میں خیر اور ان کے قدموں میں ہمیشہ برکت رکھ۔
+                اے رب! انہیں دنیا اور آخرت دونوں میں بھلائی عطا فرما،
+                اور ہمیں ان کی خدمت کی توفیق دے۔
+                <br />
+                آمین یا رب العالمین۔
+              </p>
+            </motion.div>
+
+            {/* English transliteration + meaning */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-5 rounded-2xl bg-rose-50/80 px-5 py-4 text-center"
+            >
+              <p className="text-sm italic text-rose-700/90">
+                “Ya Allah, bless Khala Najma with a long, healthy, and
+                prosperous life. Keep a smile on her face, light of faith in her
+                heart, peace in her home, and goodness in her every step. Grant
+                her the best of this world and the Hereafter. Ameen.”
+              </p>
+            </motion.div>
+
+            <div className="mt-6 flex items-center justify-center gap-2 text-rose-500">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                With love & endless duas
+              </span>
+              <Sparkles className="h-4 w-4" />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </main>
+  )
+}
